@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Beyond Battleship: Tracking a Maneuvering Ship with Bayesian Estimation – Bayesian Battleship: Finding Ships with Probability</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-d31a0c91b01e363be7b7a36e602e2c70.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Bayesian Battleship: Finding Ships with Probability</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./about.html" aria-current="page"> 
+<span class="menu-text">Beyond Battleship: Tracking a Maneuvering Ship with Bayesian Estimation</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#from-battleship-to-dynamic-state-estimation" id="toc-from-battleship-to-dynamic-state-estimation" class="nav-link" data-scroll-target="#from-battleship-to-dynamic-state-estimation">1. From Battleship to Dynamic State Estimation</a></li>
+  <li><a href="#modeling-a-moving-ship" id="toc-modeling-a-moving-ship" class="nav-link" data-scroll-target="#modeling-a-moving-ship">2. Modeling a Moving Ship</a></li>
+  <li><a href="#markov-chains-and-motion-model-transitions" id="toc-markov-chains-and-motion-model-transitions" class="nav-link" data-scroll-target="#markov-chains-and-motion-model-transitions">3. Markov Chains and Motion-Model Transitions</a></li>
+  <li><a href="#bayesian-filtering-predicting-and-updating-the-ships-state" id="toc-bayesian-filtering-predicting-and-updating-the-ships-state" class="nav-link" data-scroll-target="#bayesian-filtering-predicting-and-updating-the-ships-state">4. Bayesian Filtering: Predicting and Updating the Ship’s State</a></li>
+  <li><a href="#monte-carlo-methods-for-dynamic-state-estimation" id="toc-monte-carlo-methods-for-dynamic-state-estimation" class="nav-link" data-scroll-target="#monte-carlo-methods-for-dynamic-state-estimation">5. Monte Carlo Methods for Dynamic State Estimation</a></li>
+  <li><a href="#numerical-experiments" id="toc-numerical-experiments" class="nav-link" data-scroll-target="#numerical-experiments">6. Numerical Experiments</a></li>
+  <li><a href="#results-and-discussion" id="toc-results-and-discussion" class="nav-link" data-scroll-target="#results-and-discussion">7. Results and Discussion</a></li>
+  <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">8. Conclusions</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Beyond Battleship: Tracking a Maneuvering Ship with Bayesian Estimation</h1>
+<p class="subtitle lead">Can We Predict Where a Ship Is Going—and How It Is Maneuvering?</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>As I began learning about the Kalman filter and Bayesian estimation, I couldn’t help but think about the game of Battleship. In Battleship, every hit or miss provides new information about the possible locations of hidden ships. Even when we miss, we learn something. This resembles the fundamental idea behind Bayesian estimation: combining what we previously believed with new observations to improve our understanding of an unknown state.</p>
+<p>But traditional Battleship assumes ships remain stationary. <strong>What happens when the ships can move?</strong></p>
+<p>Imagine tracking a ship that can travel straight, turn left, or turn right. We don’t know its exact location, and we don’t know which maneuver it is performing. Instead, we receive imperfect observations and must continually update our predictions.</p>
+<p>This creates two interconnected estimation problems:</p>
+<ol type="1">
+<li><strong>State estimation:</strong> Where is the ship currently located?</li>
+<li><strong>Motion-model estimation:</strong> Which maneuver is the ship most likely performing?</li>
+</ol>
+<p>This blog post explores how Bayesian state estimation can address both problems simultaneously.</p>
+<p>We will model a ship moving across a discrete grid, with several predefined motion models governing its behavior. The ship can transition between these models according to a Markov chain, while noisy or incomplete measurements provide information about its location.</p>
+<p>Using recursive Bayesian updates, we will estimate the probability distribution over the ship’s possible locations and motion modes. We will then use Monte Carlo simulations to investigate how accurately the estimator tracks the ship, how quickly it recognizes changes in maneuver, and how measurement uncertainty affects its performance.</p>
+<section id="research-questions" class="level3">
+<h3 class="anchored" data-anchor-id="research-questions">Research Questions</h3>
+<p>This blog investigates three central questions:</p>
+<ol type="1">
+<li><strong>Prediction:</strong> How can we predict a ship’s next position using its current state and possible motion models?</li>
+<li><strong>Estimation:</strong> How can Bayesian updates combine predictions with uncertain measurements to estimate both position and maneuver?</li>
+<li><strong>Performance:</strong> Does accounting for multiple motion models improve tracking accuracy compared with assuming a single motion model?</li>
+</ol>
+</section>
+<section id="hypothesis" class="level3">
+<h3 class="anchored" data-anchor-id="hypothesis">Hypothesis</h3>
+<p>A Bayesian estimator that accounts for multiple possible motion models will track a maneuvering ship more accurately than an estimator assuming a single motion model, particularly when the ship changes direction.</p>
+<p>This hypothesis will be evaluated through numerical experiments rather than assumed to be true.</p>
+</section>
+</section>
+<section id="from-battleship-to-dynamic-state-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="from-battleship-to-dynamic-state-estimation">1. From Battleship to Dynamic State Estimation</h2>
+<p>In traditional Battleship, ships remain stationary throughout the game. Although their locations are unknown, their positions do not change. As players make guesses and receive information about hits and misses, they can gradually narrow down the possible locations of their opponent’s ships.</p>
+<p>Interestingly, even if we assume that every valid ship placement is equally likely, <strong>that does not necessarily mean every grid cell has an equal probability of containing a ship.</strong></p>
+<p>Consider the following example.</p>
+<section id="why-some-cells-are-more-likely-than-others" class="level3">
+<h3 class="anchored" data-anchor-id="why-some-cells-are-more-likely-than-others">Why Some Cells Are More Likely Than Others</h3>
+<p>Suppose we have a 4×4 grid containing a single ship that occupies two consecutive cells, either horizontally or vertically. There are 24 possible placements of this ship, and if we have no prior information favoring one placement over another, each placement has a probability of</p>
+<p><span class="math display">\[
+P(\text{placement})=\frac{1}{24}\approx 4.17\%.
+\]</span></p>
+<p>However, some grid cells belong to more possible ship placements than others.</p>
+<style>
+.heatmap-grid {
+  --cell-size: 62px;
+  display: grid;
+  grid-template-columns: repeat(4, var(--cell-size));
+  gap: 6px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.heatmap-cell {
+  width: var(--cell-size);
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 7px;
+  color: #111;
+}
+
+.p1 { background-color: #dbe8f4; }
+.p2 { background-color: #bdd5ea; }
+.p3 { background-color: #96bddc; }
+.p4 { background-color: #6fa3cf; }
+
+.battleship-figure {
+  text-align: center;
+}
+
+.battleship-figure img {
+  width: 100%;
+  height: auto;
+}
+
+.battleship-caption {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 12px;
+}
+</style>
+<div class="columns">
+<div class="column" style="width:55%;">
+<div class="battleship-figure">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/battleship_24_placements.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption>All 24 possible placements of a length-two ship on a 4×4 grid. Blue cells represent the ship.</figcaption>
+</figure>
+</div>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="heatmap-grid">
+<div class="heatmap-cell p1">
+8.3%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p1">
+8.3%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p4">
+16.7%
+</div>
+<div class="heatmap-cell p4">
+16.7%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p4">
+16.7%
+</div>
+<div class="heatmap-cell p4">
+16.7%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p1">
+8.3%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p2">
+12.5%
+</div>
+<div class="heatmap-cell p1">
+8.3%
+</div>
+</div>
+</div>
+</div>
+<div class="battleship-caption">
+<p>Left: All 24 possible placements of a length-two ship. Right: Probability that each grid cell contains part of the ship.</p>
+</div>
+<p>A corner cell, for example, can only be occupied by two possible ship placements, while one of the four central cells can be occupied by four. Therefore, even though every placement is equally likely, the probability that a particular cell contains part of the ship is not uniform.</p>
+<p>For a corner cell,</p>
+<p><span class="math display">\[
+P(\text{corner occupied})=\frac{2}{24}\approx 8.33\%.
+\]</span></p>
+<p>For a cell in the center of the board,</p>
+<p><span class="math display">\[
+P(\text{center occupied})=\frac{4}{24}\approx 16.67\%.
+\]</span></p>
+<p>This illustrates an important distinction: <strong>the probability of a complete ship configuration is not the same as the probability that an individual cell is occupied.</strong></p>
+<p>Now suppose we fire at a cell and miss. We can eliminate every possible ship placement that includes that cell. The remaining placements become our new set of possibilities, and their probabilities are updated accordingly.</p>
+<p>This is an example of Bayesian inference. We begin with a prior belief about the ship’s location, incorporate new information from our observation, and obtain an updated belief called the posterior.</p>
+</section>
+<section id="from-static-inference-to-dynamic-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="from-static-inference-to-dynamic-estimation">From Static Inference to Dynamic Estimation</h3>
+<p>So far, we have assumed that the ship cannot move. Once a placement is ruled out, it stays ruled out because the ship remains stationary.</p>
+<p>But what happens if the ship is allowed to move?</p>
+<p>Imagine that after every turn, the ship can travel forward, turn left, or turn right. A cell that was empty during the previous turn might contain the ship during the next turn. Suddenly, we can no longer estimate its position using only the history of hits and misses.</p>
+<p>We must also account for <strong>how the ship might move between observations.</strong></p>
+<p>This changes the problem from static inference to dynamic state estimation.</p>
+<p>In static inference, we are estimating an unknown quantity that remains constant. In dynamic state estimation, the quantity we are estimating evolves over time.</p>
+<p>A dynamic estimator must repeatedly perform two operations:</p>
+<ol type="1">
+<li><strong>Prediction:</strong> Use a model of the ship’s motion to predict where it might move next.</li>
+<li><strong>Measurement update:</strong> Incorporate a new observation to correct our prediction and update the probabilities of the possible states.</li>
+</ol>
+<p>This prediction-and-update process is the foundation of recursive Bayesian filtering.</p>
+</section>
+<section id="discrete-and-continuous-states" class="level3">
+<h3 class="anchored" data-anchor-id="discrete-and-continuous-states">Discrete and Continuous States</h3>
+<p>Before developing our motion model, it is useful to distinguish between discrete time, discrete states, and continuous states.</p>
+<p>A <strong>discrete-time system</strong> updates at specific time intervals rather than continuously. For example, our ship might move once every five seconds, with its state updated at each time step.</p>
+<p>A <strong>discrete-state system</strong> has a finite or countable set of possible states. In Battleship, a ship might occupy cell A1, B2, or C3, but it cannot occupy a position halfway between cells.</p>
+<p>By contrast, a <strong>continuous-state system</strong> allows quantities such as position and velocity to take any real value within a specified range. Real ships move through continuous physical space, but we can simplify their motion by restricting them to a grid.</p>
+<p>These distinctions matter because the structure of the state space influences which estimation methods are appropriate. A conventional Kalman filter is designed for linear systems with Gaussian uncertainty, whereas a finite-state Bayesian filter can directly represent probabilities over individual grid cells and motion modes.</p>
+</section>
+<section id="our-moving-battleship-model" class="level3">
+<h3 class="anchored" data-anchor-id="our-moving-battleship-model">Our Moving Battleship Model</h3>
+<p>For this project, we will consider a single ship moving across a finite, two-dimensional grid.</p>
+<p>To keep the problem manageable, we will make several simplifying assumptions:</p>
+<ul>
+<li>The ship occupies one grid cell at each time step.</li>
+<li>The ship has a heading corresponding to one of four directions: north, east, south, or west.</li>
+<li>At each time step, the ship follows one of three possible motion modes: straight, left turn, or right turn.</li>
+<li>The motion mode can change over time according to predefined transition probabilities.</li>
+<li>We receive imperfect observations of the ship’s location, meaning that a measurement does not always identify the correct cell.</li>
+</ul>
+<p>The ship’s state will therefore contain three pieces of information: its <strong>position, heading, and motion mode</strong>.</p>
+<p>Our objective is to estimate all three from a sequence of noisy observations.</p>
+<p>This raises an interesting question: <em>If we observe a ship moving across a grid, can we determine not only where it is, but also which maneuver it is performing?</em></p>
+<p>In the following sections, we will develop a probabilistic motion model and use Bayesian filtering to investigate that question.</p>
+</section>
+</section>
+<section id="modeling-a-moving-ship" class="level2">
+<h2 class="anchored" data-anchor-id="modeling-a-moving-ship">2. Modeling a Moving Ship</h2>
+<p>Before we can estimate where a ship is going, we first need a model that describes how it can move. In traditional Battleship, this isn’t necessary because the ships remain stationary. But once we allow the ship to move, its future position depends on its current position, the direction it’s facing, and the maneuver it’s performing.</p>
+<p>Rather than modeling a ship moving continuously through the ocean, we will simplify the problem by representing its motion on a finite grid.</p>
+<section id="defining-the-ships-state" class="level3">
+<h3 class="anchored" data-anchor-id="defining-the-ships-state">Defining the Ship’s State</h3>
+<p>Consider a 10×10 grid containing a single ship that occupies one cell at a time. At each time step, the ship has a position, a heading, and a motion mode.</p>
+<p>We can represent its complete state as</p>
+<p><span class="math display">\[
+s_k=(x_k,y_k,h_k,m_k),
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(x_k\)</span> is the ship’s horizontal grid coordinate.</li>
+<li><span class="math inline">\(y_k\)</span> is the ship’s vertical grid coordinate.</li>
+<li><span class="math inline">\(h_k\)</span> is its heading (north, east, south, or west).</li>
+<li><span class="math inline">\(m_k\)</span> is its motion mode (straight, left turn, or right turn).</li>
+<li><span class="math inline">\(k\)</span> is the current time step.</li>
+</ul>
+<p>For example, the state</p>
+<p><span class="math display">\[
+s_k=(4,6,\text{north},\text{straight})
+\]</span></p>
+<p>means the ship is currently located at grid cell <span class="math inline">\((4,6)\)</span>, facing north, and following the straight-motion model.</p>
+<p>Although we can describe the ship using a state, we do not necessarily know its true state. Our estimator will maintain a probability distribution over the possible states and update that distribution whenever a new measurement becomes available.</p>
+</section>
+<section id="three-possible-motion-models" class="level3">
+<h3 class="anchored" data-anchor-id="three-possible-motion-models">Three Possible Motion Models</h3>
+<p>We will begin with three possible motion models:</p>
+<ol type="1">
+<li><strong>Straight:</strong> The ship maintains its current heading and moves forward.</li>
+<li><strong>Left turn:</strong> The ship turns 90 degrees to the left and moves forward in its new direction.</li>
+<li><strong>Right turn:</strong> The ship turns 90 degrees to the right and moves forward in its new direction.</li>
+</ol>
+<p>For simplicity, we assume the ship moves exactly one grid cell per time step. We also define turns to occur before the ship moves into its next cell.</p>
+<p>For example, if the ship is facing north, its possible movements are:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Motion model</th>
+<th>New heading</th>
+<th>Position change</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Straight</td>
+<td>North</td>
+<td><span class="math inline">\((0,+1)\)</span></td>
+</tr>
+<tr class="even">
+<td>Left turn</td>
+<td>West</td>
+<td><span class="math inline">\((-1,0)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Right turn</td>
+<td>East</td>
+<td><span class="math inline">\((+1,0)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The same rules apply when the ship faces other directions, with the position changes rotated accordingly.</p>
+</section>
+<section id="writing-the-motion-model-mathematically" class="level3">
+<h3 class="anchored" data-anchor-id="writing-the-motion-model-mathematically">Writing the Motion Model Mathematically</h3>
+<p>We can describe the ship’s movement using a discrete-time state transition.</p>
+<p>Let the heading be represented by an integer:</p>
+<p><span class="math display">\[
+h_k \in \{0,1,2,3\},
+\]</span></p>
+<p>where <span class="math inline">\(0\)</span> represents north, <span class="math inline">\(1\)</span> east, <span class="math inline">\(2\)</span> south, and <span class="math inline">\(3\)</span> west.</p>
+<p>Next, assign a turn value to each motion mode:</p>
+<p><span class="math display">\[
+u(m_k)=
+\begin{cases}
+0 &amp; \text{straight},\\
+-1 &amp; \text{left turn},\\
++1 &amp; \text{right turn}.
+\end{cases}
+\]</span></p>
+<p>The ship’s new heading is then</p>
+<p><span class="math display">\[
+h_{k+1}=(h_k+u(m_k))\bmod 4.
+\]</span></p>
+<p>The modulo operation ensures that the heading always remains one of the four possible directions.</p>
+<p>Once we know the new heading, we can calculate the ship’s next position:</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+x_{k+1}\\
+y_{k+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+x_k\\
+y_k
+\end{bmatrix}
++
+d(h_{k+1}),
+\]</span></p>
+<p>where the heading-dependent displacement is</p>
+<p><span class="math display">\[
+d(h)=
+\begin{cases}
+(0,1)^T &amp; h=0,\\
+(1,0)^T &amp; h=1,\\
+(0,-1)^T &amp; h=2,\\
+(-1,0)^T &amp; h=3.
+\end{cases}
+\]</span></p>
+<p>These equations describe how the ship moves from one state to the next when its motion mode is known.</p>
+</section>
+<section id="introducing-uncertainty" class="level3">
+<h3 class="anchored" data-anchor-id="introducing-uncertainty">Introducing Uncertainty</h3>
+<p>So far, our motion models are deterministic. If we know the ship’s position, heading, and motion mode, we can calculate exactly where it will move next.</p>
+<p>However, our estimator does not necessarily know which motion mode the ship is following.</p>
+<p>For example, suppose the ship is facing north at cell <span class="math inline">\((4,4)\)</span>. If it continues straight, it will move to <span class="math inline">\((4,5)\)</span>. If it turns left, it will move to <span class="math inline">\((3,4)\)</span>. If it turns right, it will move to <span class="math inline">\((5,4)\)</span>.</p>
+<p>Rather than predicting one location with certainty, we can assign probabilities to these different possibilities.</p>
+<p>We will model the motion mode as a random variable that can change over time. Its transition probabilities will tell us how likely the ship is to continue following its current motion model or switch to another.</p>
+<p>For now, we assume that once a motion mode is selected, the corresponding movement occurs exactly as defined. Our uncertainty comes from not knowing the ship’s true state and from the possibility that its motion mode changes. Additional randomness in the movement itself could be introduced later.</p>
+</section>
+<section id="handling-grid-boundaries" class="level3">
+<h3 class="anchored" data-anchor-id="handling-grid-boundaries">Handling Grid Boundaries</h3>
+<p>Because the ship moves on a finite grid, we also need to decide what happens when a maneuver would take it outside the board.</p>
+<p>For this project, we will assume that transitions leading outside the grid are not allowed. The ship must choose among the motion modes that keep it within the grid.</p>
+<p>This introduces an important detail: near the edge of the board, the available motion modes may be more restricted than they are in the center.</p>
+<p>We will account for these restrictions when defining the state transition probabilities.</p>
+</section>
+<section id="from-motion-models-to-probabilities" class="level3">
+<h3 class="anchored" data-anchor-id="from-motion-models-to-probabilities">From Motion Models to Probabilities</h3>
+<p>We now have a mathematical description of how a ship can move under three different motion models.</p>
+<p>But one question remains unanswered: <strong>How likely is the ship to continue straight, turn left, or turn right?</strong></p>
+<p>The ship might tend to continue its current maneuver, rather than randomly changing direction at every time step.</p>
+<p>To model this behavior, we will use a Markov chain. This allows us to assign probabilities to the transitions between motion modes and predict how the ship’s state distribution evolves over time.</p>
+<p>In the next section, we will develop this transition model and begin connecting the ship’s dynamics to Bayesian estimation.</p>
+</section>
+</section>
+<section id="markov-chains-and-motion-model-transitions" class="level2">
+<h2 class="anchored" data-anchor-id="markov-chains-and-motion-model-transitions">3. Markov Chains and Motion-Model Transitions</h2>
+<p>In the previous section, we defined three possible motion models that describe how our ship moves across the board: straight, left turn, and right turn. However, a maneuvering ship is unlikely to follow the same motion model indefinitely. It may travel straight for several time steps, initiate a turn, and then resume traveling straight.</p>
+<p>How can we mathematically describe this behavior?</p>
+<section id="the-markov-property" class="level3">
+<h3 class="anchored" data-anchor-id="the-markov-property">3.1 The Markov Property</h3>
+<p>A Markov chain describes a stochastic process that transitions between a finite set of states according to a set of probabilities.</p>
+<p>The defining characteristic of a Markov chain is the <strong>Markov property</strong>, which states that the probability of transitioning to the next state depends only on the current state, rather than the entire history of previous states.</p>
+<p>Let <span class="math inline">\(m_k\)</span> represent the ship’s motion mode at time step <span class="math inline">\(k\)</span>. The Markov property can be expressed mathematically as</p>
+<p><span class="math display">\[
+P(m_{k+1} \mid m_k, m_{k-1}, \ldots, m_0)
+=
+P(m_{k+1} \mid m_k).
+\]</span></p>
+<p>In other words, if we know that the ship is currently turning left, we do not need to know every maneuver it has previously performed to determine the probability of its next motion mode.</p>
+<p>This assumption simplifies our problem significantly. Rather than keeping track of the entire maneuver history of the ship, we only need to consider its current motion mode when predicting its next motion mode.</p>
+</section>
+<section id="the-transition-probability-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="the-transition-probability-matrix">3.2 The Transition Probability Matrix</h3>
+<p>Recall that our ship can operate under one of three motion modes:</p>
+<ul>
+<li><span class="math inline">\(S\)</span>: Straight</li>
+<li><span class="math inline">\(L\)</span>: Left turn</li>
+<li><span class="math inline">\(R\)</span>: Right turn</li>
+</ul>
+<p>We can describe the probability of transitioning between these modes using a <strong>transition probability matrix</strong>.</p>
+<p>Let</p>
+<p><span class="math display">\[
+T_{ij} = P(m_{k+1}=j \mid m_k=i),
+\]</span></p>
+<p>where <span class="math inline">\(i\)</span> represents the current motion mode and <span class="math inline">\(j\)</span> represents the next motion mode.</p>
+<p>For this simulation, suppose we define the following transition matrix:</p>
+<p><span class="math display">\[
+T =
+\begin{bmatrix}
+0.80 &amp; 0.10 &amp; 0.10 \\
+0.20 &amp; 0.75 &amp; 0.05 \\
+0.20 &amp; 0.05 &amp; 0.75
+\end{bmatrix}.
+\]</span></p>
+<p>The rows represent the current motion mode, while the columns represent the next motion mode.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Current Mode</th>
+<th style="text-align: center;">Straight (<span class="math inline">\(S\)</span>)</th>
+<th style="text-align: center;">Left (<span class="math inline">\(L\)</span>)</th>
+<th style="text-align: center;">Right (<span class="math inline">\(R\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Straight (<span class="math inline">\(S\)</span>)</td>
+<td style="text-align: center;">0.80</td>
+<td style="text-align: center;">0.10</td>
+<td style="text-align: center;">0.10</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Left (<span class="math inline">\(L\)</span>)</td>
+<td style="text-align: center;">0.20</td>
+<td style="text-align: center;">0.75</td>
+<td style="text-align: center;">0.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Right (<span class="math inline">\(R\)</span>)</td>
+<td style="text-align: center;">0.20</td>
+<td style="text-align: center;">0.05</td>
+<td style="text-align: center;">0.75</td>
+</tr>
+</tbody>
+</table>
+<p>For example, if the ship is currently traveling straight, there is:</p>
+<ul>
+<li>An 80% probability that it will continue traveling straight.</li>
+<li>A 10% probability that it will begin turning left.</li>
+<li>A 10% probability that it will begin turning right.</li>
+</ul>
+<p>Since the ship must operate under exactly one motion mode at the next time step, each row of the transition matrix must sum to one:</p>
+<p><span class="math display">\[
+\sum_{j \in \{S,L,R\}} T_{ij} = 1.
+\]</span></p>
+<p>Notice that the transition matrix does not determine exactly which maneuver the ship will perform next. Instead, it describes the probability distribution from which the next maneuver is selected.</p>
+</section>
+<section id="motion-mode-persistence" class="level3">
+<h3 class="anchored" data-anchor-id="motion-mode-persistence">3.3 Motion-Mode Persistence</h3>
+<p>One important feature of our transition matrix is that the diagonal entries are significantly larger than the off-diagonal entries.</p>
+<p>This means that the ship is more likely to remain in its current motion mode than to transition to a different one.</p>
+<p>This assumption is motivated by the observation that physical systems often exhibit temporal correlation in their motion. A maneuvering vehicle typically does not switch randomly between unrelated maneuvers at every time step.</p>
+<p>For example, suppose the ship is currently traveling straight. The probability that it continues traveling straight for the next three consecutive time steps is</p>
+<p><span class="math display">\[
+P(S \rightarrow S \rightarrow S \rightarrow S)
+=
+(0.80)^3
+=
+0.512.
+\]</span></p>
+<p>Therefore, there is a 51.2% probability that the ship continues traveling straight without changing its motion mode over the next three time steps.</p>
+<p>More generally, the probability of remaining in motion mode <span class="math inline">\(i\)</span> for the next <span class="math inline">\(n\)</span> transitions is</p>
+<p><span class="math display">\[
+P(\text{no mode change over } n \text{ transitions})
+=
+(T_{ii})^n.
+\]</span></p>
+<p>By adjusting the diagonal entries of the transition matrix, we can control how frequently the ship changes its motion mode.</p>
+<p>A transition matrix with large diagonal entries produces persistent maneuvers, while a transition matrix with smaller diagonal entries produces more frequent changes in motion.</p>
+</section>
+<section id="predicting-the-next-motion-mode" class="level3">
+<h3 class="anchored" data-anchor-id="predicting-the-next-motion-mode">3.4 Predicting the Next Motion Mode</h3>
+<p>Suppose we are observing the ship and are uncertain about which motion mode it is currently following.</p>
+<p>We can represent our belief about its current motion mode using a probability vector:</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_k =
+\begin{bmatrix}
+P(m_k=S) \\
+P(m_k=L) \\
+P(m_k=R)
+\end{bmatrix}.
+\]</span></p>
+<p>For example, suppose we initially know that the ship is traveling straight. Our initial probability vector is</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_0 =
+\begin{bmatrix}
+1 \\
+0 \\
+0
+\end{bmatrix}.
+\]</span></p>
+<p>Using the transition matrix, we can predict the probability distribution of the ship’s motion mode at the next time step:</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_{k+1}
+=
+T^T\boldsymbol{\mu}_k.
+\]</span></p>
+<p>The transpose is required because our transition matrix stores the current modes along its rows, while our probability distribution is represented as a column vector.</p>
+<p>After one time step, our predicted probability distribution becomes</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_1 =
+\begin{bmatrix}
+0.80 &amp; 0.20 &amp; 0.20 \\
+0.10 &amp; 0.75 &amp; 0.05 \\
+0.10 &amp; 0.05 &amp; 0.75
+\end{bmatrix}
+\begin{bmatrix}
+1 \\
+0 \\
+0
+\end{bmatrix}
+=
+\begin{bmatrix}
+0.80 \\
+0.10 \\
+0.10
+\end{bmatrix}.
+\]</span></p>
+<p>After another time step,</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_2
+=
+T^T\boldsymbol{\mu}_1
+=
+\begin{bmatrix}
+0.68 \\
+0.16 \\
+0.16
+\end{bmatrix}.
+\]</span></p>
+<p>Without receiving any additional measurements, we become increasingly uncertain about which motion mode the ship is following.</p>
+<p>In general, we can predict the motion-mode probability distribution <span class="math inline">\(n\)</span> time steps into the future using</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_{k+n}
+=
+(T^T)^n\boldsymbol{\mu}_k.
+\]</span></p>
+</section>
+<section id="effect-on-predicted-ship-trajectories" class="level3">
+<h3 class="anchored" data-anchor-id="effect-on-predicted-ship-trajectories">3.5 Effect on Predicted Ship Trajectories</h3>
+<p>The transition probabilities directly influence the possible trajectories of the ship.</p>
+<p>Suppose the ship is initially traveling north under the straight motion model. At the next time step, the ship has three possible outcomes:</p>
+<ul>
+<li>Continue north with probability 0.80.</li>
+<li>Turn left and travel west with probability 0.10.</li>
+<li>Turn right and travel east with probability 0.10.</li>
+</ul>
+<p>At the following time step, each of these possible trajectories branches into three additional possibilities.</p>
+<p>The probability of a particular sequence of motion modes can be calculated by multiplying the corresponding transition probabilities.</p>
+<p>For example, the probability that the ship continues straight, turns left, and then continues straight is</p>
+<p><span class="math display">\[
+\begin{aligned}
+P(S,S,L,S \mid m_0=S)
+&amp;= P(S \mid S)P(L \mid S)P(S \mid L) \\
+&amp;= (0.80)(0.10)(0.20) \\
+&amp;= 0.016.
+\end{aligned}
+\]</span></p>
+<p>Thus, this particular sequence of future maneuvers has a probability of 1.6%.</p>
+<p>As we predict further into the future, the number of possible motion-mode sequences grows exponentially. For three possible motion modes and a prediction horizon of <span class="math inline">\(n\)</span> time steps, there are</p>
+<p><span class="math display">\[
+3^n
+\]</span></p>
+<p>possible mode sequences before accounting for restrictions imposed by the board boundaries.</p>
+<p>Although some sequences may result in the same final ship state, their individual probabilities must still be accounted for when constructing the predicted state distribution.</p>
+<p>This illustrates one of the fundamental challenges of tracking a maneuvering target: uncertainty in its future motion leads to uncertainty in its future position and heading.</p>
+</section>
+<section id="the-true-motion-mode-vs.-the-estimated-motion-mode" class="level3">
+<h3 class="anchored" data-anchor-id="the-true-motion-mode-vs.-the-estimated-motion-mode">3.6 The True Motion Mode vs.&nbsp;the Estimated Motion Mode</h3>
+<p>An important distinction must be made between the actual motion of the ship and our knowledge of that motion.</p>
+<p>At any given time step, the ship operates under exactly one motion mode:</p>
+<p><span class="math display">\[
+m_k \in \{S,L,R\}.
+\]</span></p>
+<p>However, the estimator does not have direct access to this information. Instead, it maintains a probability distribution over the possible motion modes.</p>
+<p>For example, the ship may actually be turning left while the estimator maintains the following belief:</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_k =
+\begin{bmatrix}
+0.60 \\
+0.30 \\
+0.10
+\end{bmatrix}.
+\]</span></p>
+<p>In this case, the estimator believes that traveling straight is the most likely motion mode, even though the ship is actually turning left.</p>
+<p>This does not necessarily mean that the estimator is functioning incorrectly. Its belief reflects the information available to it at that particular time.</p>
+<p>The transition matrix allows the estimator to predict how these probabilities evolve, while incoming measurements provide new information that can be used to correct these predictions.</p>
+<p>Our objective is therefore not simply to estimate the position of the ship, but to estimate a joint probability distribution over its position, heading, and motion mode:</p>
+<p><span class="math display">\[
+P(x_k,y_k,h_k,m_k \mid z_{1:k}),
+\]</span></p>
+<p>where <span class="math inline">\(z_{1:k}\)</span> represents the history of measurements received through time step <span class="math inline">\(k\)</span>.</p>
+<p>This combination of probabilistic motion prediction and measurement-based correction forms the foundation of the Bayesian filter, which we will develop in the next section.</p>
+</section>
+</section>
+<section id="bayesian-filtering-predicting-and-updating-the-ships-state" class="level2">
+<h2 class="anchored" data-anchor-id="bayesian-filtering-predicting-and-updating-the-ships-state">4. Bayesian Filtering: Predicting and Updating the Ship’s State</h2>
+<p>We now have a model that describes how our ship moves and a Markov chain that describes how it transitions between motion modes. However, knowing how the ship <em>might</em> move does not necessarily tell us where it actually is.</p>
+<p>Suppose we have a radar system that provides an estimate of the ship’s location at every time step. Unfortunately, these measurements are imperfect. The radar might indicate that the ship is in one cell when it is actually in a neighboring cell.</p>
+<p>Should we trust our motion model or the radar measurement?</p>
+<p>Rather than choosing one over the other, Bayesian filtering allows us to combine both sources of information according to their probabilities.</p>
+<section id="revisiting-bayes-theorem" class="level3">
+<h3 class="anchored" data-anchor-id="revisiting-bayes-theorem">4.1 Revisiting Bayes’ Theorem</h3>
+<p>Recall our original Battleship example, where we updated the probabilities of possible ship placements after receiving information about a hit or miss.</p>
+<p>This process is governed by Bayes’ theorem:</p>
+<p><span class="math display">\[
+P(A \mid B)
+=
+\frac{P(B \mid A)P(A)}{P(B)}.
+\]</span></p>
+<p>In the context of state estimation, we can rewrite Bayes’ theorem as</p>
+<p><span class="math display">\[
+P(s \mid z)
+=
+\frac{P(z \mid s)P(s)}{P(z)},
+\]</span></p>
+<p>where <span class="math inline">\(s\)</span> represents the ship’s state and <span class="math inline">\(z\)</span> represents an observation.</p>
+<p>Each term has a specific interpretation:</p>
+<ul>
+<li><strong>Prior, <span class="math inline">\(P(s)\)</span>:</strong> What we believe about the ship’s state before receiving a measurement.</li>
+<li><strong>Likelihood, <span class="math inline">\(P(z \mid s)\)</span>:</strong> How likely we are to receive the measurement if the ship is actually in state <span class="math inline">\(s\)</span>.</li>
+<li><strong>Evidence, <span class="math inline">\(P(z)\)</span>:</strong> The overall probability of receiving the measurement across all possible states.</li>
+<li><strong>Posterior, <span class="math inline">\(P(s \mid z)\)</span>:</strong> Our updated belief about the ship’s state after incorporating the measurement.</li>
+</ul>
+<p>The fundamental idea is that a measurement does not necessarily tell us which state is correct. Instead, it provides evidence that makes certain states more or less probable.</p>
+<p>Unlike traditional Battleship, however, our ship moves between observations. This means that before applying Bayes’ theorem, we must first predict how our previous probability distribution evolves through time.</p>
+</section>
+<section id="representing-our-belief-about-the-ship" class="level3">
+<h3 class="anchored" data-anchor-id="representing-our-belief-about-the-ship">4.2 Representing Our Belief About the Ship</h3>
+<p>Recall from Section 2 that the complete state of our ship is</p>
+<p><span class="math display">\[
+s_k=(x_k,y_k,h_k,m_k).
+\]</span></p>
+<p>Rather than maintaining a single estimate of this state, our Bayesian estimator maintains a probability distribution over all possible combinations of position, heading, and motion mode.</p>
+<p>We can represent this distribution as</p>
+<p><span class="math display">\[
+b_k(s_k)
+=
+P(s_k \mid z_{1:k}),
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+z_{1:k}=\{z_1,z_2,\ldots,z_k\}
+\]</span></p>
+<p>represents the collection of measurements received through time step <span class="math inline">\(k\)</span>.</p>
+<p>We will refer to <span class="math inline">\(b_k\)</span> as the estimator’s <strong>belief distribution</strong>.</p>
+<p>For our 10×10 grid, we have:</p>
+<ul>
+<li>100 possible locations.</li>
+<li>4 possible headings.</li>
+<li>3 possible motion modes.</li>
+</ul>
+<p>Therefore, the total number of candidate states before accounting for any additional restrictions is</p>
+<p><span class="math display">\[
+N_s=100(4)(3)=1200.
+\]</span></p>
+<p>The estimator assigns a probability to each of these states, such that</p>
+<p><span class="math display">\[
+\sum_{s_k \in \mathcal{S}} b_k(s_k)=1,
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{S}\)</span> represents the set of all possible states.</p>
+<p>For example, the two states</p>
+<p><span class="math display">\[
+s^{(1)}=(4,6,\text{north},S)
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+s^{(2)}=(4,6,\text{west},L)
+\]</span></p>
+<p>represent the same ship location but different headings and motion modes.</p>
+<p>Although a radar measurement might provide evidence that the ship is located at <span class="math inline">\((4,6)\)</span>, it does not necessarily tell us which of these two states is correct.</p>
+<p>Maintaining a joint probability distribution allows us to represent these different possibilities simultaneously.</p>
+</section>
+<section id="the-prediction-step" class="level3">
+<h3 class="anchored" data-anchor-id="the-prediction-step">4.3 The Prediction Step</h3>
+<p>Suppose we have already estimated the ship’s state at time step <span class="math inline">\(k-1\)</span> and have obtained the belief distribution</p>
+<p><span class="math display">\[
+b_{k-1}(s_{k-1})
+=
+P(s_{k-1}\mid z_{1:k-1}).
+\]</span></p>
+<p>Before receiving our next measurement, we want to predict what the ship’s state might be at time step <span class="math inline">\(k\)</span>.</p>
+<p>To do this, we use the motion models developed in Section 2 and the transition probabilities developed in Section 3.</p>
+<p>Let</p>
+<p><span class="math display">\[
+P(s_k\mid s_{k-1})
+\]</span></p>
+<p>represent the probability of transitioning from state <span class="math inline">\(s_{k-1}\)</span> to state <span class="math inline">\(s_k\)</span>.</p>
+<p>For the following formulation, we will use the convention that the ship first selects its next motion mode, <span class="math inline">\(m_k\)</span>, and then performs the corresponding maneuver to arrive at state <span class="math inline">\(s_k\)</span>. This follows the transition-then-move interpretation introduced in Section 3.</p>
+<p>Away from the grid boundaries, the state transition probability can be expressed as</p>
+<p><span class="math display">\[
+P(s_k\mid s_{k-1})
+=
+\begin{cases}
+T_{m_{k-1},m_k}, &amp; \text{if the motion model produces } s_k,\\
+0, &amp; \text{otherwise}.
+\end{cases}
+\]</span></p>
+<p>This means that once a new motion mode is selected, the resulting position and heading are determined by the motion equations.</p>
+<p>For example, suppose the ship is currently in the state</p>
+<p><span class="math display">\[
+s_{k-1}=(4,4,\text{north},S).
+\]</span></p>
+<p>Using our transition matrix, the possible next states are</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Possible next state</th>
+<th style="text-align: right;">Transition probability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\((4,5,\text{north},S)\)</span></td>
+<td style="text-align: right;">0.80</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((3,4,\text{west},L)\)</span></td>
+<td style="text-align: right;">0.10</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((5,4,\text{east},R)\)</span></td>
+<td style="text-align: right;">0.10</td>
+</tr>
+</tbody>
+</table>
+<p>Every other next state has a transition probability of zero when starting from this particular state.</p>
+<p>As discussed in Section 2, transitions that would move the ship outside the grid are not allowed. Near a boundary, we therefore assign zero probability to invalid maneuvers and redistribute their probability among the valid maneuvers in proportion to their original transition probabilities.</p>
+<p>To predict the complete state distribution, we must consider every possible previous state and the probability that it transitions into each possible next state.</p>
+<p>This gives us the <strong>Bayesian prediction equation</strong>:</p>
+<p><span class="math display">\[
+\boxed{
+\bar{b}_k(s_k)
+=
+\sum_{s_{k-1}\in\mathcal{S}}
+P(s_k\mid s_{k-1})
+b_{k-1}(s_{k-1})
+}
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+\bar{b}_k(s_k)
+=
+P(s_k\mid z_{1:k-1})
+\]</span></p>
+<p>represents our predicted belief before receiving the measurement at time step <span class="math inline">\(k\)</span>.</p>
+<p>Notice that multiple previous states may transition into the same next state. When this happens, their probability contributions are added together.</p>
+<p>The prediction step essentially redistributes probability throughout the state space according to the ship’s possible movements.</p>
+</section>
+<section id="modeling-imperfect-measurements" class="level3">
+<h3 class="anchored" data-anchor-id="modeling-imperfect-measurements">4.4 Modeling Imperfect Measurements</h3>
+<p>So far, we have only considered uncertainty associated with the ship’s motion. We now need to introduce uncertainty associated with our observations.</p>
+<p>Suppose that at every time step, a radar-like sensor provides a measurement of the ship’s position:</p>
+<p><span class="math display">\[
+z_k=(x_k^{\text{meas}},y_k^{\text{meas}}).
+\]</span></p>
+<p>We assume that the sensor does not directly measure the ship’s heading or motion mode.</p>
+<p>To keep our measurement model simple, suppose that when the ship is away from the grid boundaries:</p>
+<ul>
+<li>There is a 60% probability that the sensor reports the correct cell.</li>
+<li>There is a 10% probability that it reports the cell immediately north of the ship.</li>
+<li>There is a 10% probability that it reports the cell immediately south of the ship.</li>
+<li>There is a 10% probability that it reports the cell immediately east of the ship.</li>
+<li>There is a 10% probability that it reports the cell immediately west of the ship.</li>
+</ul>
+<p>These probabilities are illustrative modeling assumptions rather than characteristics of an actual radar system.</p>
+<style>
+.measurement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 70px);
+  gap: 5px;
+  width: max-content;
+  margin: 20px auto;
+}
+
+.measurement-cell {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  color: #111;
+  background-color: #f0f0f0;
+}
+
+.measurement-neighbor {
+  background-color: #bdd5ea;
+}
+
+.measurement-center {
+  background-color: #6fa3cf;
+  font-weight: 600;
+}
+</style>
+<div class="measurement-grid">
+<div class="measurement-cell">
+0%
+</div>
+<div class="measurement-cell measurement-neighbor">
+10%
+</div>
+<div class="measurement-cell">
+0%
+</div>
+<div class="measurement-cell measurement-neighbor">
+10%
+</div>
+<div class="measurement-cell measurement-center">
+<pre><code>60%
+&lt;small&gt;True cell&lt;/small&gt;</code></pre>
+</div>
+<div class="measurement-cell measurement-neighbor">
+10%
+</div>
+<div class="measurement-cell">
+0%
+</div>
+<div class="measurement-cell measurement-neighbor">
+10%
+</div>
+<div class="measurement-cell">
+0%
+</div>
+</div>
+<div class="battleship-caption">
+<p>Probability distribution of possible sensor measurements given the ship’s true location.</p>
+</div>
+<p>Mathematically, we can describe this measurement model using the likelihood function</p>
+<p><span class="math display">\[
+P(z_k\mid s_k)
+=
+\begin{cases}
+0.60, &amp; d=0,\\
+0.10, &amp; d=1,\\
+0, &amp; \text{otherwise},
+\end{cases}
+\]</span></p>
+<p>for a ship located away from the grid boundaries, where</p>
+<p><span class="math display">\[
+d=
+|x_k^{\text{meas}}-x_k|
++
+|y_k^{\text{meas}}-y_k|
+\]</span></p>
+<p>is the Manhattan distance between the measured location and the ship’s true location.</p>
+<p>The Manhattan distance measures the number of horizontal and vertical grid movements required to travel between two cells.</p>
+<p>Near the boundaries, we will exclude measurements that fall outside the grid and normalize the remaining measurement probabilities.</p>
+<p>An important feature of this measurement model is that the likelihood depends only on the ship’s position:</p>
+<p><span class="math display">\[
+P(z_k\mid x_k,y_k,h_k,m_k)
+=
+P(z_k\mid x_k,y_k).
+\]</span></p>
+<p>The sensor does not directly provide information about the ship’s heading or motion mode.</p>
+<p>However, as we will see shortly, measurements of position can still provide indirect information about both.</p>
+</section>
+<section id="the-measurement-update" class="level3">
+<h3 class="anchored" data-anchor-id="the-measurement-update">4.5 The Measurement Update</h3>
+<p>After completing the prediction step, we receive a new measurement <span class="math inline">\(z_k\)</span>.</p>
+<p>We now want to determine how this measurement changes our predicted probability distribution.</p>
+<p>Using Bayes’ theorem, we obtain</p>
+<p><span class="math display">\[
+P(s_k\mid z_{1:k})
+=
+\frac{
+P(z_k\mid s_k)
+P(s_k\mid z_{1:k-1})
+}{
+P(z_k\mid z_{1:k-1})
+}.
+\]</span></p>
+<p>Using our belief notation, this becomes</p>
+<p><span class="math display">\[
+b_k(s_k)
+=
+\frac{
+P(z_k\mid s_k)\bar{b}_k(s_k)
+}{
+P(z_k\mid z_{1:k-1})
+}.
+\]</span></p>
+<p>The numerator combines two sources of information:</p>
+<ol type="1">
+<li>How likely the state was according to our motion prediction.</li>
+<li>How consistent the state is with the new measurement.</li>
+</ol>
+<p>A state that was already highly probable and is consistent with the measurement will generally receive a higher posterior probability.</p>
+<p>Conversely, a state that is inconsistent with the measurement will receive a lower posterior probability, even if it was initially favored by the motion model.</p>
+</section>
+<section id="normalizing-the-probability-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="normalizing-the-probability-distribution">4.6 Normalizing the Probability Distribution</h3>
+<p>Multiplying the predicted probability of each state by its measurement likelihood does not necessarily produce a distribution that sums to one.</p>
+<p>We must therefore normalize the resulting probabilities.</p>
+<p>First, calculate the unnormalized probability of each state:</p>
+<p><span class="math display">\[
+\tilde{b}_k(s_k)
+=
+P(z_k\mid s_k)\bar{b}_k(s_k).
+\]</span></p>
+<p>Next, calculate the normalization constant:</p>
+<p><span class="math display">\[
+\eta_k
+=
+\sum_{s_k\in\mathcal{S}}
+\tilde{b}_k(s_k).
+\]</span></p>
+<p>This constant is the evidence term in Bayes’ theorem:</p>
+<p><span class="math display">\[
+\eta_k=P(z_k\mid z_{1:k-1}).
+\]</span></p>
+<p>Finally, divide each unnormalized probability by the normalization constant to obtain the posterior distribution:</p>
+<p><span class="math display">\[
+\boxed{
+b_k(s_k)
+=
+\frac{
+P(z_k\mid s_k)\bar{b}_k(s_k)
+}{
+\displaystyle
+\sum_{s'_k\in\mathcal{S}}
+P(z_k\mid s'_k)\bar{b}_k(s'_k)
+}
+}
+\]</span></p>
+<p>The resulting probabilities sum to one:</p>
+<p><span class="math display">\[
+\sum_{s_k\in\mathcal{S}} b_k(s_k)=1.
+\]</span></p>
+<p>This assumes that the normalization constant is greater than zero. If it is zero, the measurement is impossible under every state currently considered possible by the estimator. Such a situation would indicate that our motion or measurement assumptions need to be reconsidered.</p>
+<p>We now have an updated belief about the ship’s location, heading, and motion mode.</p>
+</section>
+<section id="a-numerical-example" class="level3">
+<h3 class="anchored" data-anchor-id="a-numerical-example">4.7 A Numerical Example</h3>
+<p>Let’s work through a complete prediction and measurement update.</p>
+<p>Suppose we initially know that the ship is located at <span class="math inline">\((4,4)\)</span>, facing north, and traveling straight.</p>
+<p>Its initial state is</p>
+<p><span class="math display">\[
+s_0=(4,4,\text{north},S).
+\]</span></p>
+<p>Since we know its initial state exactly, we assign this state a probability of one and every other state a probability of zero.</p>
+<p><strong>Step 1: Prediction</strong></p>
+<p>Using our Markov transition matrix, we obtain three possible next states:</p>
+<p><span class="math display">\[
+\begin{aligned}
+s^{(1)}&amp;=(4,5,\text{north},S),\\
+s^{(2)}&amp;=(3,4,\text{west},L),\\
+s^{(3)}&amp;=(5,4,\text{east},R).
+\end{aligned}
+\]</span></p>
+<p>Their predicted probabilities are</p>
+<p><span class="math display">\[
+\begin{aligned}
+\bar{b}_1(s^{(1)})&amp;=0.80,\\
+\bar{b}_1(s^{(2)})&amp;=0.10,\\
+\bar{b}_1(s^{(3)})&amp;=0.10.
+\end{aligned}
+\]</span></p>
+<p>At this point, we believe the ship is most likely traveling north.</p>
+<p><strong>Step 2: Receive a measurement</strong></p>
+<p>Suppose our radar reports that the ship is located at</p>
+<p><span class="math display">\[
+z_1=(3,5).
+\]</span></p>
+<p>Interestingly, this measurement does not correspond exactly to any of our three predicted locations.</p>
+<p>However, it is immediately adjacent to two of them:</p>
+<ul>
+<li>The predicted straight-motion location, <span class="math inline">\((4,5)\)</span>.</li>
+<li>The predicted left-turn location, <span class="math inline">\((3,4)\)</span>.</li>
+</ul>
+<p>The predicted right-turn location, <span class="math inline">\((5,4)\)</span>, is three grid movements away from the reported measurement.</p>
+<p>Using our measurement model, the likelihoods are therefore</p>
+<p><span class="math display">\[
+\begin{aligned}
+P(z_1\mid s^{(1)})&amp;=0.10,\\
+P(z_1\mid s^{(2)})&amp;=0.10,\\
+P(z_1\mid s^{(3)})&amp;=0.
+\end{aligned}
+\]</span></p>
+<p><strong>Step 3: Calculate the unnormalized probabilities</strong></p>
+<p>We multiply each predicted probability by its corresponding measurement likelihood:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Motion mode</th>
+<th style="text-align: right;">Predicted probability</th>
+<th style="text-align: right;">Likelihood</th>
+<th style="text-align: right;">Unnormalized probability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Straight</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.080</td>
+</tr>
+<tr class="even">
+<td>Left turn</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.010</td>
+</tr>
+<tr class="odd">
+<td>Right turn</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+<p>The normalization constant is</p>
+<p><span class="math display">\[
+\eta_1=0.080+0.010+0.000=0.090.
+\]</span></p>
+<p><strong>Step 4: Calculate the posterior probabilities</strong></p>
+<p>Dividing each unnormalized probability by the normalization constant gives</p>
+<p><span class="math display">\[
+b_1(s^{(1)})
+=
+\frac{0.080}{0.090}
+\approx 0.8889,
+\]</span></p>
+<p><span class="math display">\[
+b_1(s^{(2)})
+=
+\frac{0.010}{0.090}
+\approx 0.1111,
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+b_1(s^{(3)})
+=
+\frac{0}{0.090}
+=
+0.
+\]</span></p>
+<p>Our updated belief is therefore</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Motion mode</th>
+<th style="text-align: right;">Before measurement</th>
+<th style="text-align: right;">After measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Straight</td>
+<td style="text-align: right;">80%</td>
+<td style="text-align: right;">88.89%</td>
+</tr>
+<tr class="even">
+<td>Left turn</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">11.11%</td>
+</tr>
+<tr class="odd">
+<td>Right turn</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">0%</td>
+</tr>
+</tbody>
+</table>
+<style>
+.bayes-comparison {
+  max-width: 550px;
+  margin: 25px auto;
+}
+
+.bayes-mode {
+  margin-bottom: 18px;
+}
+
+.bayes-mode-label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.bayes-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 0;
+}
+
+.bayes-bar-label {
+  width: 65px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.bayes-bar-track {
+  background-color: rgba(128, 128, 128, 0.12);
+  border-radius: 5px;
+  flex: 1;
+  height: 27px;
+  overflow: hidden;
+}
+
+.bayes-bar {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.bayes-prior {
+  background-color: #a6c8e0;
+}
+
+.bayes-posterior {
+  background-color: #397cb5;
+}
+
+.bayes-value {
+  width: 55px;
+  text-align: right;
+  font-size: 0.85rem;
+}
+</style>
+<div class="bayes-comparison">
+<div class="bayes-mode">
+<pre><code>&lt;div class="bayes-mode-label"&gt;Straight&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;Before&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-prior" style="width:80%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;80%&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;After&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-posterior" style="width:88.89%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;88.89%&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+<div class="bayes-mode">
+<pre><code>&lt;div class="bayes-mode-label"&gt;Left Turn&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;Before&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-prior" style="width:10%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;10%&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;After&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-posterior" style="width:11.11%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;11.11%&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+<div class="bayes-mode">
+<pre><code>&lt;div class="bayes-mode-label"&gt;Right Turn&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;Before&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-prior" style="width:10%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;10%&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="bayes-bar-row"&gt;
+  &lt;div class="bayes-bar-label"&gt;After&lt;/div&gt;
+  &lt;div class="bayes-bar-track"&gt;
+    &lt;div class="bayes-bar bayes-posterior" style="width:0%"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bayes-value"&gt;0%&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+</div>
+<div class="battleship-caption">
+<p>Comparison of predicted and posterior motion-mode probabilities after incorporating a noisy position measurement.</p>
+</div>
+<p>Notice that even though our sensor only measured position, we were able to update our belief about the ship’s motion mode.</p>
+<p>The measurement provided equally strong evidence for the straight and left-turn possibilities. However, because straight motion was more probable before receiving the measurement, it remains the most probable motion mode afterward.</p>
+<p>Meanwhile, the right-turn possibility was eliminated because it was inconsistent with our assumed measurement model.</p>
+<p>This illustrates one of the most important ideas in Bayesian state estimation: <strong>we can estimate quantities that are not directly measured by exploiting their relationships with quantities that are measured.</strong></p>
+</section>
+<section id="estimating-position-heading-and-motion-mode" class="level3">
+<h3 class="anchored" data-anchor-id="estimating-position-heading-and-motion-mode">4.8 Estimating Position, Heading, and Motion Mode</h3>
+<p>Our Bayesian filter maintains a joint probability distribution over all four state variables:</p>
+<p><span class="math display">\[
+b_k(x,y,h,m)
+=
+P(x_k=x,y_k=y,h_k=h,m_k=m\mid z_{1:k}).
+\]</span></p>
+<p>However, we may sometimes be interested in only one component of the state.</p>
+<p>For example, suppose we want to visualize the probability that the ship occupies a particular grid cell, regardless of its heading or motion mode.</p>
+<p>We can obtain this probability by summing over all possible headings and motion modes:</p>
+<p><span class="math display">\[
+P(x_k=x,y_k=y\mid z_{1:k})
+=
+\sum_h\sum_m b_k(x,y,h,m).
+\]</span></p>
+<p>This process is called <strong>marginalization</strong>.</p>
+<p>Similarly, we can obtain the probability distribution over the ship’s heading:</p>
+<p><span class="math display">\[
+P(h_k=h\mid z_{1:k})
+=
+\sum_x\sum_y\sum_m b_k(x,y,h,m).
+\]</span></p>
+<p>We can also obtain the probability distribution over its motion mode:</p>
+<p><span class="math display">\[
+P(m_k=m\mid z_{1:k})
+=
+\sum_x\sum_y\sum_h b_k(x,y,h,m).
+\]</span></p>
+<p>These marginal probability distributions will be particularly useful when visualizing the results of our numerical experiments.</p>
+<p>For example, we can use:</p>
+<ul>
+<li>A probability heatmap to visualize the ship’s estimated location.</li>
+<li>A bar chart to visualize the probabilities of the four possible headings.</li>
+<li>A time-history plot to visualize the probabilities of the three motion modes as the ship maneuvers.</li>
+</ul>
+<p>If we want a single estimated location rather than an entire probability distribution, one option is to select the most probable grid cell:</p>
+<p><span class="math display">\[
+(\hat{x}_k,\hat{y}_k)
+=
+\underset{(x,y)}{\arg\max}
+\;
+P(x_k=x,y_k=y\mid z_{1:k}).
+\]</span></p>
+<p>This is known as the <strong>maximum a posteriori (MAP) estimate</strong> of the ship’s position.</p>
+<p>Likewise, the most probable motion mode is</p>
+<p><span class="math display">\[
+\hat{m}_k
+=
+\underset{m\in\{S,L,R\}}{\arg\max}
+\;
+P(m_k=m\mid z_{1:k}).
+\]</span></p>
+<p>Alternatively, we could calculate the expected position by taking a probability-weighted average of all possible locations:</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+\hat{x}_k\\
+\hat{y}_k
+\end{bmatrix}
+=
+\sum_x\sum_y
+\begin{bmatrix}
+x\\
+y
+\end{bmatrix}
+P(x_k=x,y_k=y\mid z_{1:k}).
+\]</span></p>
+<p>Unlike the MAP position estimate, the expected position does not necessarily correspond to an actual grid cell. However, it minimizes the expected squared position estimation error under our posterior distribution.</p>
+<p>Although these estimates provide convenient summaries, the complete probability distribution contains additional information about the uncertainty associated with each estimate.</p>
+</section>
+<section id="recursive-bayesian-filtering" class="level3">
+<h3 class="anchored" data-anchor-id="recursive-bayesian-filtering">4.9 Recursive Bayesian Filtering</h3>
+<p>So far, we have performed a single prediction and measurement update. However, the ship continues moving, and additional measurements become available over time.</p>
+<p>The posterior distribution obtained at the current time step becomes the starting point for the prediction at the next time step.</p>
+<p>This creates a recursive process:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Previous posterior"] --&gt; B["Prediction"]
+    M["Motion models and Markov transition probabilities"] --&gt; B
+    B --&gt; C["Predicted state distribution"]
+    C --&gt; D["Measurement update"]
+    Z["New sensor measurement"] --&gt; D
+    D --&gt; E["Normalization"]
+    E --&gt; F["Updated posterior distribution"]
+    F --&gt; G["Advance to next time step"]
+    G --&gt; A
+</pre>
+</div>
+<p></p><figcaption> The recursive Bayesian filtering process.</figcaption> </figure><p></p>
+</div>
+</div>
+</div>
+<p>At every time step, the estimator performs three operations:</p>
+<ol type="1">
+<li><p><strong>Prediction:</strong> Propagate the previous posterior distribution through the probabilistic motion model.</p></li>
+<li><p><strong>Measurement update:</strong> Multiply each predicted state probability by the likelihood of the new measurement.</p></li>
+<li><p><strong>Normalization:</strong> Normalize the probabilities to obtain the new posterior distribution.</p></li>
+</ol>
+<p>Mathematically, the entire process can be summarized by two equations.</p>
+<p><strong>Prediction:</strong></p>
+<p><span class="math display">\[
+\bar{b}_k(s_k)
+=
+\sum_{s_{k-1}\in\mathcal{S}}
+P(s_k\mid s_{k-1})b_{k-1}(s_{k-1}).
+\]</span></p>
+<p><strong>Measurement update and normalization:</strong></p>
+<p><span class="math display">\[
+b_k(s_k)
+=
+\frac{
+P(z_k\mid s_k)\bar{b}_k(s_k)
+}{
+\displaystyle
+\sum_{s'_k\in\mathcal{S}}
+P(z_k\mid s'_k)\bar{b}_k(s'_k)
+}.
+\]</span></p>
+<p>These two equations form the foundation of our discrete Bayesian filter.</p>
+<p>The recursive nature of the filter means that we do not need to store and reprocess every previous measurement whenever a new observation becomes available. Under the assumptions that the complete ship state satisfies the Markov property and that each measurement depends only on the current state, the previous posterior distribution summarizes the relevant information from our measurement history.</p>
+</section>
+<section id="why-not-use-a-kalman-filter" class="level3">
+<h3 class="anchored" data-anchor-id="why-not-use-a-kalman-filter">4.10 Why Not Use a Kalman Filter?</h3>
+<p>When I first began learning about state estimation, one question I had was when to use a Kalman filter instead of a Bayesian filter.</p>
+<p>It turns out that the Kalman filter is itself a particular implementation of Bayesian filtering.</p>
+<p>A conventional Kalman filter assumes that the system can be represented using linear state and measurement equations with Gaussian noise:</p>
+<p><span class="math display">\[
+\mathbf{x}_k
+=
+A\mathbf{x}_{k-1}+\mathbf{w}_k,
+\]</span></p>
+<p><span class="math display">\[
+\mathbf{z}_k
+=
+H\mathbf{x}_k+\mathbf{v}_k,
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{w}_k\)</span> represents process noise and <span class="math inline">\(\mathbf{v}_k\)</span> represents measurement noise.</p>
+<p>Under the linear-Gaussian assumptions and a Gaussian initial state distribution, the resulting probability distribution remains Gaussian. This allows the Kalman filter to represent its belief using only a mean vector and a covariance matrix.</p>
+<p>Our moving Battleship problem, however, has several characteristics that make a conventional Kalman filter unsuitable for directly representing the complete state distribution:</p>
+<ul>
+<li>The ship’s position is restricted to discrete grid cells.</li>
+<li>Its heading is restricted to four discrete directions.</li>
+<li>Its motion mode is a categorical variable.</li>
+<li>The motion dynamics change when the ship switches between motion modes.</li>
+<li>The state probability distribution may contain multiple distinct peaks.</li>
+</ul>
+<p>Imagine, for example, that we believe the ship is equally likely to occupy two widely separated cells.</p>
+<p>A single Gaussian distribution may place its highest probability density somewhere between those cells, even though our discrete belief assigns little or no probability to the intermediate locations.</p>
+<style>
+.distribution-example {
+  max-width: 650px;
+  margin: 20px auto;
+}
+
+.distribution-example svg {
+  width: 100%;
+  height: auto;
+}
+</style>
+<div class="distribution-example">
+<svg viewbox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
+</svg><p><line x1="45" y1="185" x2="565" y2="185" stroke="currentColor" stroke-width="1.2"> <line x1="45" y1="185" x2="45" y2="25" stroke="currentColor" stroke-width="1.2"></line></line></p>
+<p><rect x="105" y="55" width="25" height="130" rx="3" fill="#397cb5" opacity="0.8"> <rect x="480" y="55" width="25" height="130" rx="3" fill="#397cb5" opacity="0.8"></rect></rect></p>
+<p><path d="M45 173
+           C90 164, 135 142, 180 117
+           C225 92, 265 74, 305 74
+           C345 74, 385 92, 430 117
+           C475 142, 520 164, 565 173" fill="none" stroke="#d97706" stroke-width="3"></path></p>
+<p><line x1="305" y1="74" x2="305" y2="185" stroke="#d97706" stroke-width="1.5" stroke-dasharray="5 5"></line></p>
+<p><text x="117" y="45" font-size="13" text-anchor="middle" fill="#397cb5">Possible ship</text> <text x="117" y="30" font-size="13" text-anchor="middle" fill="#397cb5">location</text></p>
+<p><text x="492" y="45" font-size="13" text-anchor="middle" fill="#397cb5">Possible ship</text> <text x="492" y="30" font-size="13" text-anchor="middle" fill="#397cb5">location</text></p>
+<p><text x="305" y="60" font-size="13" text-anchor="middle" fill="#d97706">Gaussian approximation</text></p>
+<p><text x="305" y="205" font-size="12" text-anchor="middle" fill="currentColor">Mean</text></p>
+<p><text x="305" y="230" font-size="13" text-anchor="middle" fill="currentColor">Position</text></p>
+<p><text x="15" y="105" font-size="12" text-anchor="middle" transform="rotate(-90,15,105)" fill="currentColor">Relative probability</text></p>
+
+</div>
+<div class="battleship-caption">
+<p>Conceptual comparison between a discrete probability distribution with two distinct peaks and a single Gaussian approximation. The vertical scales are illustrative.</p>
+</div>
+<p>This does not mean that Kalman filters cannot be used to track maneuvering targets. Extensions and combinations of Kalman filters can accommodate nonlinear dynamics and multiple motion models.</p>
+<p>However, because our problem has a finite and relatively small state space, we can directly maintain and update the probability of every possible state without requiring a Gaussian approximation.</p>
+<p>This approach is known as <strong>exact discrete Bayesian filtering</strong>.</p>
+</section>
+<section id="from-exact-bayesian-filtering-to-monte-carlo-methods" class="level3">
+<h3 class="anchored" data-anchor-id="from-exact-bayesian-filtering-to-monte-carlo-methods">4.11 From Exact Bayesian Filtering to Monte Carlo Methods</h3>
+<p>We now have a complete mathematical framework for estimating the position, heading, and motion mode of our moving ship.</p>
+<p>For our 10×10 grid, maintaining a probability distribution over 1,200 possible states is computationally manageable.</p>
+<p>But what happens as we increase the size of the grid, introduce additional motion models, or consider more possible headings?</p>
+<p>In general, the number of possible states in our model is</p>
+<p><span class="math display">\[
+N_s=N_xN_yN_hN_m,
+\]</span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(N_x\)</span> is the number of horizontal grid positions.</li>
+<li><span class="math inline">\(N_y\)</span> is the number of vertical grid positions.</li>
+<li><span class="math inline">\(N_h\)</span> is the number of possible headings.</li>
+<li><span class="math inline">\(N_m\)</span> is the number of possible motion modes.</li>
+</ul>
+<p>Consider how quickly the number of states grows as we increase the dimensions of the grid while maintaining four possible headings and three motion modes.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Grid size</th>
+<th style="text-align: right;">Possible states</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10×10</td>
+<td style="text-align: right;">1,200</td>
+</tr>
+<tr class="even">
+<td>20×20</td>
+<td style="text-align: right;">4,800</td>
+</tr>
+<tr class="odd">
+<td>50×50</td>
+<td style="text-align: right;">30,000</td>
+</tr>
+<tr class="even">
+<td>100×100</td>
+<td style="text-align: right;">120,000</td>
+</tr>
+<tr class="odd">
+<td>1,000×1,000</td>
+<td style="text-align: right;">12,000,000</td>
+</tr>
+</tbody>
+</table>
+<p>As the state space grows, explicitly maintaining and updating every possible state can become increasingly expensive.</p>
+<p>What if, instead of tracking every possible state, we could approximate the entire probability distribution using a collection of randomly sampled states?</p>
+<p>This is the idea behind sampling-based estimation methods such as particle filtering, which we will explore in the next section.</p>
+</section>
+</section>
+<section id="monte-carlo-methods-for-dynamic-state-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="monte-carlo-methods-for-dynamic-state-estimation">5. Monte Carlo Methods for Dynamic State Estimation</h2>
+<p>TODO: - Explain the difference between exact Bayesian filtering and sampling-based approximations. - Introduce Monte Carlo sampling and its role in probabilistic estimation. - Explain particle filtering as one possible approximation to the Bayesian state distribution. - Describe how particles can represent candidate ship locations, headings, and motion modes. - Explain particle prediction, measurement weighting, and resampling. - Discuss when sampling-based approaches become useful as the state space grows. - Clarify the distinction between ordinary Monte Carlo simulation, particle filtering, and Markov chain Monte Carlo.</p>
+</section>
+<section id="numerical-experiments" class="level2">
+<h2 class="anchored" data-anchor-id="numerical-experiments">6. Numerical Experiments</h2>
+<p>TODO:</p>
+<p>Develop a Python simulation that generates ship trajectories, noisy observations, and Bayesian state estimates.</p>
+<p><strong>Experiment 1: Tracking a Ship with a Known Motion Model</strong> - Simulate a ship following one predefined motion model. - Estimate its position from imperfect measurements. - Establish a baseline for estimation accuracy.</p>
+<p><strong>Experiment 2: Tracking a Ship with Unknown Motion Modes</strong> - Allow the ship to switch between straight, left-turn, and right-turn motion. - Estimate its position and motion mode simultaneously. - Compare the inferred maneuver probabilities against the true maneuver sequence.</p>
+<p><strong>Experiment 3: Comparing Single-Model and Multiple-Model Estimation</strong> - Compare the proposed Bayesian multiple-model estimator with a baseline that assumes constant-heading motion. - Measure positional estimation error. - Evaluate how quickly the estimator identifies maneuver changes.</p>
+<p><strong>Experiment 4: The Effect of Measurement Uncertainty</strong> - Repeat the simulation with different levels of observation noise. - Investigate how uncertainty affects tracking accuracy, maneuver identification, and confidence.</p>
+<p><strong>Optional Experiment 5: Sampling-Based Estimation</strong> - Implement a particle filter. - Compare sampled estimates with exact Bayesian estimates on a manageable grid. - Investigate the relationship between particle count, estimation accuracy, and computational cost.</p>
+</section>
+<section id="results-and-discussion" class="level2">
+<h2 class="anchored" data-anchor-id="results-and-discussion">7. Results and Discussion</h2>
+<p>TODO: - Plot the true ship trajectory, noisy observations, and estimated trajectory. - Visualize the estimated probability distribution across grid cells. - Plot the probabilities of straight, left-turn, and right-turn modes over time. - Identify how quickly the estimator recognizes changes in maneuver. - Quantify position estimation error across repeated simulations. - Compare single-model and multiple-model performance. - Discuss the effects of measurement noise and transition probabilities. - If particle filtering is implemented, analyze estimation accuracy and computational cost as a function of particle count. - Discuss cases where the estimator performs poorly or becomes overconfident. - Explain what the results reveal about probabilistic tracking and dynamic state estimation.</p>
+</section>
+<section id="conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions">8. Conclusions</h2>
+<p>TODO: - Summarize how Bayesian filtering can estimate both a ship’s location and its motion mode. - Explain the role of Markov chains in modeling uncertain maneuver transitions. - Evaluate whether the numerical experiments support the original hypothesis. - Discuss the benefits and limitations of multiple-model state estimation. - Connect the simplified Battleship scenario to real-world tracking applications, including radar tracking, autonomous navigation, and aerospace guidance and navigation. - Suggest potential extensions involving continuous-state dynamics, coordinated-turn models, Singer motion models, or interacting multiple-model filters.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<p>TODO: - Add references covering Bayesian filtering, hidden Markov models, multiple-model estimation, and particle filtering. - Include relevant course materials and academic sources. - Cite any algorithms or modeling assumptions adopted from external references. - Include a brief acknowledgment of how generative AI was used during project development, consistent with the course syllabus.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
